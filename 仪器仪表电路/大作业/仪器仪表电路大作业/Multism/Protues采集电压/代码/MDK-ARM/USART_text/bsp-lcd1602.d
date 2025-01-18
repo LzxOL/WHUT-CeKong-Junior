@@ -1,0 +1,10 @@
+usart_text\bsp-lcd1602.o: ..\HARDWARE\bsp-lcd1602\bsp-lcd1602.c
+usart_text\bsp-lcd1602.o: ..\HARDWARE\bsp-lcd1602\bsp-lcd1602.h
+usart_text\bsp-lcd1602.o: D:\MDK531\Keil\STM32F1xx_DFP\2.4.0\Device\Include\stm32f10x.h
+usart_text\bsp-lcd1602.o: .\RTE\_USART_text\RTE_Components.h
+usart_text\bsp-lcd1602.o: ../Drivers/CMSIS/Include/core_cm3.h
+usart_text\bsp-lcd1602.o: D:\MDK531\ARM\ARMCC\Bin\..\include\stdint.h
+usart_text\bsp-lcd1602.o: ../Drivers/CMSIS/Include/cmsis_version.h
+usart_text\bsp-lcd1602.o: ../Drivers/CMSIS/Include/cmsis_compiler.h
+usart_text\bsp-lcd1602.o: ../Drivers/CMSIS/Include/cmsis_armcc.h
+usart_text\bsp-lcd1602.o: D:\MDK531\Keil\STM32F1xx_DFP\2.4.0\Device\Include\system_stm32f10x.h
