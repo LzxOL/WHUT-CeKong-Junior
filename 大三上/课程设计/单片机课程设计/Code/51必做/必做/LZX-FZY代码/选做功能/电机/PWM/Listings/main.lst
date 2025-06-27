@@ -1,0 +1,92 @@
+C51 COMPILER V9.54   MAIN                                                                  01/11/2024 14:45:18 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          #include <intrins.h>//包含移位函数_crol_(  )的头文件
+   3          
+   4          #define uchar unsigned char                                     
+   5          #define uint unsigned int
+   6                  
+   7          uchar timer=0;//timer记录中断次数
+   8          uchar flag=0;//记录电机状态
+   9          
+  10          
+  11          sbit P2_0=P2^0;         //定义特殊功能寄存器P2的位变量P2_0为PWM生成口
+  12          sbit motorPin1=P2^2;//定义特殊功能寄存器P2的位变量P2_2为电机引脚1
+  13          sbit motorPin2=P2^1;//定义特殊功能寄存器P2的位变量P2_1为电机引脚2
+  14          
+  15          void delay(uint i)//延时函数
+  16          {       
+  17   1              uchar t;
+  18   1              while (i--)     
+  19   1                      for(t=0;t<120;t++);
+  20   1      }
+  21          
+  22          void main(void)         //主程序
+  23            {
+  24   1              TMOD=0x01;      //设置T0为方式1
+  25   1              ET0 = 1;                //允许定时器T0中断
+  26   1              EA = 1;                 //总中断允许
+  27   1              TH0=65490/256;          //置T0高8位初值，单次定时0.05ms即50us
+  28   1              TL0=65490%256;          //置T0低8位初值
+  29   1              TR0=1;            //接通T0
+  30   1                
+  31   1              while(1)
+  32   1              {
+  33   2      
+  34   2              if(flag == 0)
+  35   2              {
+  36   3                      motorPin1 = 1;  // 设置电动机引脚1为高电平
+  37   3                      motorPin2 = 0;  // 设置电动机引脚2为低电平
+  38   3                      delay(3000);    
+  39   3                      flag = 1;
+  40   3              }
+  41   2              if(flag == 1)
+  42   2              {
+  43   3                      motorPin1 = 0;  // 设置电动机引脚1为高电平
+  44   3                      motorPin2 = 0;  // 设置电动机引脚2为低电平
+  45   3              }
+  46   2      }
+  47   1                      
+  48   1        }
+  49            
+  50          void int_T0() interrupt 1  using 0              //定时器T0中断函数
+  51          {
+  52   1              TR0=0;                  //停止计时，执行以下操作（会带来计时误差）
+  53   1              TH0=65490/256;          //置T0高8位初值，单次定时0.5ms即500us,2kHz
+  54   1              TL0=65490%256;          //置T0低8位初值
+C51 COMPILER V9.54   MAIN                                                                  01/11/2024 14:45:18 PAGE 2   
+
+  55   1              timer++;                //记录中断次数
+  56   1               if (timer==2) //中断1次，共计时1*0.05ms=0.05ms  
+  57   1           {  
+  58   2             P2_0=!P2_0; // P2.0状态求反 
+  59   2                                       
+  60   2           } 
+  61   1              if (timer==30) //中断20次，共计时20*0.05ms=1ms 1kHz  
+  62   1           {  
+  63   2             P2_0=!P2_0; // P2.0状态求反 
+  64   2                 timer=0; //中断次数清0
+  65   2           } 
+  66   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    102    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

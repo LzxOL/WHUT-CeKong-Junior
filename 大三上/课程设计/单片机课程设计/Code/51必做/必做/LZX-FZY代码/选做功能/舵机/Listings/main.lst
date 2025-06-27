@@ -1,0 +1,96 @@
+C51 COMPILER V9.54   MAIN                                                                  01/11/2024 14:47:04 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          
+   2          #include "reg52.h"
+   3          
+   4          #define uchar unsigned char                                     
+   5          #define uint unsigned int
+   6                  
+   7          sbit sg90_con = P2^3;
+   8           
+   9          uint jd;
+  10          uint cnt = 0;
+  11          
+  12          void delay(uint i)//延时函数
+  13          {       
+  14   1              uchar t;
+  15   1              while (i--)     
+  16   1                      for(t=0;t<120;t++);
+  17   1      }
+  18           
+  19          void Time0Init()
+  20          {
+  21   1              
+  22   1              TMOD = 0X01;
+  23   1              
+  24   1              TH0 = 0XFE;
+  25   1              TL0 = 0X33;
+  26   1              
+  27   1              TR0 = 1;
+  28   1              TF0 = 0;
+  29   1              
+  30   1              ET0 = 1;
+  31   1              
+  32   1              EA = 1;
+  33   1              
+  34   1      }
+  35          void main()
+  36          {
+  37   1              jd = 1;  
+  38   1              Time0Init();  
+  39   1              sg90_con = 1;  
+  40   1              
+  41   1              while(1)
+  42   1              {
+  43   2                      jd = 3; 
+  44   2                      cnt = 0;
+  45   2                      delay(2000);
+  46   2                      jd = 1; 
+  47   2                      cnt = 0;
+  48   2                      delay(2000);
+  49   2              }
+  50   1      }
+  51           
+  52          void Time0Handler() interrupt 1
+  53          {
+  54   1              cnt++;  
+C51 COMPILER V9.54   MAIN                                                                  01/11/2024 14:47:04 PAGE 2   
+
+  55   1              
+  56   1              TH0 = 0XFE;
+  57   1              TL0 = 0X33;
+  58   1              if(cnt < jd)   
+  59   1              {
+  60   2                      sg90_con = 1; 
+  61   2              }else{
+  62   2                      sg90_con = 0;           
+  63   2              }
+  64   1              
+  65   1              if(cnt == 40)   
+  66   1              {
+  67   2                      cnt = 0;
+  68   2                      sg90_con = 1;
+  69   2              }
+  70   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    134    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      4    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

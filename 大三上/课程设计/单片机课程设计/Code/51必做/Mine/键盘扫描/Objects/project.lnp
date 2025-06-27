@@ -1,0 +1,10 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj",
+".\Objects\key.obj",
+".\Objects\delay.obj",
+".\Objects\lcd.obj",
+".\Objects\shumaguan.obj",
+".\Objects\adc.obj",
+".\Objects\uart.obj" 
+TO ".\Objects\project" 
+PRINT(".\Listings\project.m51")

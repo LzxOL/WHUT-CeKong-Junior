@@ -1,0 +1,56 @@
+C51 COMPILER V9.54   MOVING_LED                                                            01/09/2024 13:47:05 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MOVING_LED
+OBJECT MODULE PLACED IN .\Objects\Moving LED.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE Moving LED.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\M
+                    -oving LED.lst) OBJECT(.\Objects\Moving LED.obj)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          #include <intrins.h>//包含移位函数_crol_(  )的头文件
+   3          
+   4          #define uchar unsigned char                                     
+   5          #define uint unsigned int
+   6                  
+   7          void delay(uint i)//延时函数
+   8          {       
+   9   1              uchar t;
+  10   1              while (i--)     
+  11   1                      for(t=0;t<120;t++);     
+  12   1      }
+  13          
+  14          void main()//主程序
+  15          {       
+  16   1              P0=0xfe;//向P0口送出点亮数据11111110
+  17   1              while (1)       
+  18   1              {       
+  19   2                      delay( 500 );//500为延时参数，可根据实际需要调整
+  20   2                      P0=_crol_(P0,1) ;// 函数_crol_(P0,1)把P0中的数据循环左移1位
+  21   2                      if(P0 == 0xf7)//如果P0为11110111
+  22   2                      {
+  23   3                              while(1)
+  24   3                              {
+  25   4                                      delay( 500 );//500为延时参数，可根据实际需要调整
+  26   4                                      P0=_cror_(P0,1) ;// 函数_cror_(P0,1)把P0中的数据循环右移1位
+  27   4                                      if(P0 == 0xfe)
+  28   4                                              break;
+  29   4                              }
+  30   3                      }
+  31   2              }
+  32   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     77    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

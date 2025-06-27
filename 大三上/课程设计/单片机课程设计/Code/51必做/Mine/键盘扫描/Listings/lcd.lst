@@ -1,0 +1,88 @@
+C51 COMPILER V9.57.0.0   LCD                                                               01/08/2025 03:33:19 PAGE 1   
+
+
+C51 COMPILER V9.57.0.0, COMPILATION OF MODULE LCD
+OBJECT MODULE PLACED IN .\Objects\lcd.obj
+COMPILER INVOKED BY: E:\Keil_v5\C51\BIN\C51.EXE Hardware\lcd.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\Hardware) DEBUG OBJECTE
+                    -XTEND PRINT(.\Listings\lcd.lst) OBJECT(.\Objects\lcd.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "delay.h"
+   3          #include "lcd.h"
+   4          
+   5          sbit RS=P1^0;      // lcd的RS接口接到单片机的P1的第0口
+   6          sbit RW=P1^1;           // lcd的RW接口接到单片机的P1的第1口
+   7          sbit E=P1^2;            // lcd的E接口接到单片机的P1的第2口
+   8          
+   9          //  在lcd显示时用到的字符串，最后一个是时间间隔符：，也可以换成-号
+  10          extern unsigned char str1[];
+  11          extern unsigned char str2[];
+  12          extern unsigned int i,j;
+  13          //  lcd写数据函数 写dat首字母
+  14          void xdat(unsigned char dat)
+  15          {
+  16   1              RS = 1;
+  17   1              RW = 0;
+  18   1              E = 0;
+  19   1              P0 = dat;
+  20   1              delay_ms(5);
+  21   1              E = 1;
+  22   1              E = 0;
+  23   1      }
+  24           
+  25          //  lcd写命令函数  写命令首字母xml
+  26          void xml(unsigned char ml){
+  27   1              RS = 0;
+  28   1              RW = 0;
+  29   1              E = 0;
+  30   1              P0 = ml;
+  31   1              delay_ms(5);
+  32   1              E = 1;
+  33   1              E = 0;
+  34   1      }
+  35           
+  36          //  lcd初始化函数
+  37          void lcd_init(){
+  38   1              xml(0x38);//八位数据接口，两行显示，5*7点阵
+  39   1              xml(0x0c);//显示开，光标关，闪烁关
+  40   1              xml(0x06);//数据读写操作后，光标自动加一，画面不动
+  41   1              xml(0x01);//光标复位，清屏
+  42   1      }
+  43           
+  44          // 主函数
+  45          void delay_lcd(){
+  46   1              xml(0x80);        // 从lcd的第一行左侧开始写入 1000 0000
+  47   1              for(i=0;i<=8;i++)
+  48   1              {
+  49   2                      xdat(str1[i]);
+  50   2                      delay_ms(5);
+  51   2              }
+  52   1              for(j=15;j>=0;j--)
+  53   1              {
+  54   2                      xml(0xc0+j);  // 从lcd的第二行左侧开始写入
+C51 COMPILER V9.57.0.0   LCD                                                               01/08/2025 03:33:19 PAGE 2   
+
+  55   2                      for(i=0;i<=14;i++)
+  56   2                      {
+  57   3                              xdat(str2[i]);
+  58   3                              delay_ms(5);
+  59   3                      }
+  60   2                      delay_ms(500);
+  61   2              }
+  62   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    180    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

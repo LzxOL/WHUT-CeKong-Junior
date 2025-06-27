@@ -1,0 +1,51 @@
+C51 COMPILER V9.54   MAIN                                                                  01/10/2024 15:36:48 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          
+   2          #include "reg52.h"
+   3          
+   4          #define uchar unsigned char                                     
+   5          #define uint unsigned int
+   6                  
+   7          sbit P3_2=P3^2;         //定义特殊功能寄存器P2的位变量P2_0为PWM生成口
+   8          sbit P0_0=P0^0;         //定义特殊功能寄存器P2的位变量P2_0为PWM生成口
+   9          
+  10          /*void delay(uint i)//延时函数
+  11          {       
+  12                  uchar t;
+  13                  while (i--)     
+  14                          for(t=0;t<120;t++);
+  15          }*/
+  16           
+  17          void main()
+  18          {  
+  19   1              while(1)
+  20   1              {
+  21   2                      if(P3_2 == 1)
+  22   2                              P0_0 = 1;
+  23   2                      else
+  24   2                              P0_0 = 0;
+  25   2              }
+  26   1      }
+  27           
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     11    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

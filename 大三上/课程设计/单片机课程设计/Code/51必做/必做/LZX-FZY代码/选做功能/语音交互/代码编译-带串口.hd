@@ -1,0 +1,116 @@
+#include "asr.h"
+#include "setup.h"
+#include "myLib/luxiaoban.h"
+
+uint32_t snid;
+DHTxx _component(9);
+QueueHandle_t play = xQueueCreate(5,4);
+float temp = 255;
+uint8_t hum = 255;
+uint32_t var = 0;
+uint32_t ser_rec = 0;
+
+//{ID:250,keyword:"命令词",ASR:"最大音量",ASRTO:"音量调整到最大"}
+//{ID:251,keyword:"命令词",ASR:"中等音量",ASRTO:"音量调整到中等"}
+//{ID:252,keyword:"命令词",ASR:"最小音量",ASRTO:"音量调整到最小"}
+//{speak:阿文-温和男声,vol:10,speed:10}
+//{playid:10001,voice:欢迎使用小鹿智能语音助手，用小鹿小鹿唤醒我}
+void audio_play(){
+  while (1) {
+    if(xQueueReceive(play,&ser_rec,0)){
+      if(ser_rec == 1)
+      {
+        temp = _component.read_temperature();
+        luxiaoban_speech(temp, 255);
+      }else if(ser_rec == 2){
+        temp = _component.read_temperature();
+        hum = _component.readHumidity();
+        luxiaoban_speech(temp, hum);
+        Serial.println(temp);
+        Serial.println(hum);
+      }
+    }
+    delay(10);
+  }
+  vTaskDelete(NULL);
+}
+//{ID:1,keyword:"命令词",ASR:"我是一",ASRTO:"一"}
+//{ID:2,keyword:"命令词",ASR:"我是二",ASRTO:"二"}
+//{ID:3,keyword:"命令词",ASR:"我是三",ASRTO:"三"}
+//{ID:4,keyword:"命令词",ASR:"我是四",ASRTO:"四"}
+//{ID:5,keyword:"命令词",ASR:"我是五",ASRTO:"五"}
+//{ID:6,keyword:"命令词",ASR:"我是六",ASRTO:"六"}
+//{ID:7,keyword:"命令词",ASR:"我是七",ASRTO:"七"}
+//{ID:8,keyword:"命令词",ASR:"我是八",ASRTO:"八"}
+//{ID:9,keyword:"命令词",ASR:"我是九",ASRTO:"九"}
+//{ID:10,keyword:"命令词",ASR:"我是十",ASRTO:"十"}
+//{ID:11,keyword:"命令词",ASR:"我是百",ASRTO:"百"}
+//{ID:12,keyword:"命令词",ASR:"我是千",ASRTO:"千"}
+//{ID:13,keyword:"命令词",ASR:"我是摄氏度",ASRTO:"摄氏度"}
+//{ID:24,keyword:"命令词",ASR:"我是点",ASRTO:"点"}
+//{ID:25,keyword:"命令词",ASR:"当前温度唯",ASRTO:"温度唯"}
+//{ID:26,keyword:"命令词",ASR:"湿度百分之",ASRTO:"湿度百分之"}
+//{ID:27,keyword:"命令词",ASR:"我是零",ASRTO:"零"}
+//{ID:28,keyword:"命令词",ASR:"当前温度唯零下",ASRTO:"温度唯零下"}
+//{playid:10002,voice:我退下了，用小鹿小鹿唤醒我}
+void ASR_CODE()
+{
+  vol_set(5);
+  //{ID:500,keyword:"唤醒词",ASR:"你好",ASRTO:"我在"}
+  //{ID:501,keyword:"命令词",ASR:"窗户",ASRTO:"好的，正在为您打开窗户"}
+  if(snid == 501){
+    Serial.println("1");
+  }
+  //{ID:502,keyword:"命令词",ASR:"窗帘",ASRTO:"好的，正在为您拉开窗帘"}
+  if(snid == 502){
+    Serial.println("2");
+  }
+  //{ID:503,keyword:"命令词",ASR:"今日温湿度",ASRTO:"当前"}
+  if(snid == 503){
+    ser_rec = 2;
+    xQueueSend(play,&ser_rec,0);
+  }
+
+  //{ID:504,keyword:"唤醒词",ASR:"小鹿同学",ASRTO:"我在呢"}
+  //{ID:505,keyword:"唤醒词",ASR:"小鹿小鹿",ASRTO:"你好 主人"}
+  //{ID:506,keyword:"唤醒词",ASR:"你好小鹿",ASRTO:"请吩咐"}
+  //{ID:507,keyword:"命令词",ASR:"打开窗帘",ASRTO:"窗帘正在为您打开"}
+  if(snid == 507){
+    luxiaoban_pulse(0,0,10000);
+  }
+  //{ID:508,keyword:"命令词",ASR:"关闭窗帘",ASRTO:"窗帘正在为您关闭"}
+  if(snid == 508){
+    luxiaoban_pulse(1,0,10000);
+  }
+  //{ID:509,keyword:"命令词",ASR:"窗帘开到一半",ASRTO:"好的，窗帘开到一半"}
+  if(snid == 509){
+    luxiaoban_pulse(0,0,5000);
+  }
+  //{ID:510,keyword:"命令词",ASR:"打开窗纱",ASRTO:"窗纱正在为您打开"}
+  if(snid == 510){
+    luxiaoban_pulse(2,0,10000);
+  }
+  //{ID:511,keyword:"命令词",ASR:"关闭窗纱",ASRTO:"窗纱正在为您关闭"}
+  if(snid == 511){
+    luxiaoban_pulse(3,0,10000);
+  }
+  //{ID:512,keyword:"命令词",ASR:"窗纱开到一半",ASRTO:"好的，窗纱开到一半"}
+  if(snid == 512){
+    luxiaoban_pulse(2,0,5000);
+  }
+  //{ID:513,keyword:"命令词",ASR:"当前温湿度",ASRTO:"当前"}
+  if(snid == 513){
+    ser_rec = 2;
+    xQueueSend(play,&ser_rec,0);
+  }
+}
+
+void setup()
+{
+  Serial.begin((9600));
+  _component.init();
+  xTaskCreate(audio_play,"audio_play",256,NULL,4,NULL);
+  luxiaoban_timer_init();
+}
+
+/** edittype="twen_asrcode" */

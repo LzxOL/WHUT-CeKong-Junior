@@ -1,0 +1,1 @@
+"Hardware\adc.c" OPTIMIZE (8,SPEED) BROWSE INCDIR(.\Hardware) DEBUG OBJECTEXTEND PRINT(.\Listings\adc.lst) OBJECT(.\Objects\adc.obj)

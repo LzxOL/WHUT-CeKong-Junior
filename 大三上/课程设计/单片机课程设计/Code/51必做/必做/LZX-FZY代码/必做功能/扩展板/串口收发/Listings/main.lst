@@ -1,0 +1,89 @@
+C51 COMPILER V9.54   MAIN                                                                  01/09/2024 17:27:28 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          #include <stdio.h>
+   3          
+   4          #define uchar unsigned char                                     
+   5          #define uint unsigned int
+   6                  
+   7          uchar dis[10]=//共阳极数码管字符0-9
+   8          {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90};
+   9          uchar temp = 0;
+  10          uchar flag = 0;
+  11          uint i;
+  12          
+  13          void delay(i)//延时函数
+  14          {       
+  15   1              uchar t;
+  16   1              while (i--)     
+  17   1                      for(t=0;t<120;t++);     
+  18   1      }
+  19          
+  20          void main(void)
+  21           { 
+  22   1               TMOD = 0x20;//设置定时器T1为方式2
+  23   1               TH1 = 0xfd;//波特率9600
+  24   1               TL1 = 0xfd;
+  25   1               SCON = 0x50;//设置串口为方式1接收，REN=1
+  26   1               PCON = 0x00;//SMOD = 0
+  27   1               TR1 = 1;//启动T1
+  28   1               EA = 1;//总中断允许位
+  29   1               ES = 1;//打开接收中断
+  30   1               
+  31   1               P3=0xff;//解锁
+  32   1               P2=0x01;//开启WX0
+  33   1               P3=0x7f;//锁存
+  34   1               P2=0xff;
+  35   1               
+  36   1               while (1)
+  37   1              { 
+  38   2                      ;               
+  39   2              }
+  40   1       }
+  41           
+  42          void int1() interrupt 4
+  43          {
+  44   1              if(RI)
+  45   1              {
+  46   2                      temp = SBUF;
+  47   2                      RI = 0; //清除接收中断标志位
+  48   2                      flag = 1;
+  49   2                      while(RI == 0)
+  50   2                      {
+  51   3                              P2 = dis[temp];
+  52   3                              if(flag==1)
+  53   3                              {
+  54   4                                      //发送接收到字符
+C51 COMPILER V9.54   MAIN                                                                  01/09/2024 17:27:28 PAGE 2   
+
+  55   4                                      SBUF=temp;
+  56   4                                      while(!TI);
+  57   4                                      TI=0;
+  58   4                                      flag=0;
+  59   4                              }
+  60   3                              delay(10);
+  61   3                      }                       
+  62   2              }
+  63   1      }       
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    136    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     14    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

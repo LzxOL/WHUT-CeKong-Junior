@@ -1,0 +1,155 @@
+C51 COMPILER V9.57.0.0   MAIN                                                              01/03/2025 15:09:07 PAGE 1   
+
+
+C51 COMPILER V9.57.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: E:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include<reg52.h>
+   2          #include<stdio.h>
+   3          #define uchar unsigned char     
+   4          #define uint  unsigned int 
+   5                  
+   6          uchar Get_AD_Result();
+   7          uchar AD1;
+   8          
+   9          uchar dis[10]=//共阳极数码管字符0-9
+  10          {0xc0,0xf9,0xa4,
+  11          0xb0,0x99,0x92,
+  12          0x82,0xf8,0x80,0x90};
+  13          
+  14          unsigned char date[8];//ADC0832
+  15          sbit CS   = P3^5;
+  16          sbit CLK  = P3^6;
+  17          sbit DIO = P3^7;
+  18          
+  19          void delay(unsigned int t)
+  20          {
+  21   1              unsigned int i=0, j=0;
+  22   1              for(i=0; i<t; i++)
+  23   1                      for(j=0; j<120; j++);
+  24   1      }                                       
+  25                                                  
+  26          void DigDisplay()
+  27          {
+  28   1              int i;
+  29   1              for(i=0;i<8;i++)
+  30   1              {
+  31   2                      switch(i)
+  32   2                      {
+  33   3                              case(0):
+  34   3                              P3=0xff;//解锁
+  35   3                              P2=0x01;//开启WX0
+  36   3                              P3=0x7f;//锁存
+  37   3                              P2=date[i]&0x7f;
+  38   3                              delay(1);
+  39   3                              break;
+  40   3                              
+  41   3                              case(1):
+  42   3                              P3=0xff;//解锁
+  43   3                              P2=0x02;//开启WX1
+  44   3                              P3=0x7f;//锁存
+  45   3                              P2=date[i];
+  46   3                              delay(1);
+  47   3                              break;
+  48   3                              
+  49   3                              case(2):
+  50   3                              P3=0xff;//解锁
+  51   3                              P2=0x04;//开启WX2
+  52   3                              P3=0x7f;//锁存
+  53   3                              P2=date[i];
+  54   3                              delay(1);
+C51 COMPILER V9.57.0.0   MAIN                                                              01/03/2025 15:09:07 PAGE 2   
+
+  55   3                              break;
+  56   3      
+  57   3                              case(3):
+  58   3                              P3=0xff;//解锁
+  59   3                              P2=0x08;//开启WX3
+  60   3                              P3=0x7f;//锁存
+  61   3                              P2=date[i];
+  62   3                              delay(1);
+  63   3                              break;
+  64   3                              
+  65   3                      }
+  66   2                      delay(1);
+  67   2              }
+  68   1      }
+  69          
+  70          uchar Get_AD_Result()
+  71          {
+  72   1          uchar i;
+  73   1          uchar data1=0,data2=0;
+  74   1          CS=0;
+  75   1          
+  76   1        //第一个下降沿到来前，DI需置1，起始控制位，开始转换
+  77   1          CLK=0;DIO=1;    
+  78   1          CLK=1;
+  79   1          
+  80   1       //第二个下降沿到来前，设D=1/0，选择单端/差分（SGL/DIF）模式中的单端输入模式
+  81   1          CLK=0;DIO=1;   
+  82   1          CLK=1;           
+  83   1       
+  84   1       //第三个下降沿到来前，设D=0/1，选择CH0/CH1，这里选择单通道ch0  
+  85   1          CLK=0;DIO=1;    
+  86   1          CLK=1;DIO=0;   
+  87   1          
+  88   1       //第四个下降沿到来前,DI =1 
+  89   1          CLK=0;DIO=1; 
+  90   1          
+  91   1      //4-11，共8个下降沿 DO输出转换信号，读取数据（MSB-->LSB） 
+  92   1          for(i=0;i<8;i++)
+  93   1          {
+  94   2              CLK=1;
+  95   2              CLK=0;
+  96   2             data1=(data1<<1)|(uchar)DIO;
+  97   2          }
+  98   1          CS=1;
+  99   1          return data1;
+ 100   1      }
+ 101          
+ 102          void main(void)
+ 103          {
+ 104   1              
+ 105   1              uint vt1;       
+ 106   1              uint while_times = 0;
+ 107   1              
+ 108   1              delay(300);
+ 109   1              ET0  = 1;
+ 110   1          TR0  = 1;
+ 111   1          ET1  = 1;
+ 112   1          TR1  = 1;
+ 113   1          EA   = 1;     
+ 114   1          CLK  = 0;      
+ 115   1          CS   = 1; 
+ 116   1               
+C51 COMPILER V9.57.0.0   MAIN                                                              01/03/2025 15:09:07 PAGE 3   
+
+ 117   1              while(1)
+ 118   1              {       
+ 119   2                 AD1=Get_AD_Result();
+ 120   2                 vt1= (5000/256.0)*AD1;
+ 121   2                      date[0] =dis[vt1/1000];
+ 122   2                      date[1] =dis[vt1/100%10]; 
+ 123   2                      date[2] =dis[vt1%100/10];
+ 124   2                      date[3] =dis[vt1%10];
+ 125   2                      DigDisplay();   
+ 126   2              }
+ 127   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    360    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     19       7
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

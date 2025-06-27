@@ -1,0 +1,128 @@
+C51 COMPILER V9.57.0.0   UART                                                              01/08/2025 16:33:06 PAGE 1   
+
+
+C51 COMPILER V9.57.0.0, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN .\Objects\uart.obj
+COMPILER INVOKED BY: E:\Keil_v5\C51\BIN\C51.EXE Hardware\uart.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\Hardware) DEBUG OBJECT
+                    -EXTEND PRINT(.\Listings\uart.lst) OBJECT(.\Objects\uart.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          #include <INTRINS.H>
+   3          #include "delay.h"
+   4          
+   5          extern unsigned char code ShowNum[];
+   6          /*
+   7          数码表编码对应关系：
+   8            0: 0xC0
+   9            1: 0xF9
+  10            2: 0xA4
+  11            3: 0xB0
+  12            4: 0x99
+  13            5: 0x92
+  14            6: 0x82
+  15            7: 0xF8
+  16            8: 0x80
+  17            9: 0x90
+  18          a-f:0x88,0x83,0xc6,0xa1,0x86,0x8e
+  19          */
+  20          
+  21          extern unsigned int temp[3];
+  22          void InitUART(void) {
+  23   1          PCON &= 0x7F;               //波特率不倍速
+  24   1              SCON = 0x50;            //8位数据,可变波特率
+  25   1              TMOD &= 0x0F;           //清除定时器1模式位
+  26   1              TMOD |= 0x20;           //设定定时器1为8位自动重装方式
+  27   1              TL1 = 0xFD;                     //设定定时初值
+  28   1              TH1 = 0xFD;                     //设定定时器重装值              
+  29   1              TR1 = 1;                        //启动定时器1
+  30   1              ET1 = 0;                //禁止定时器1中断
+  31   1              EA=1;                           //开放总中断 
+  32   1              ES=1;                           //开放串口中断
+  33   1      }
+  34          
+  35          void weichoice(unsigned int i, unsigned int j) {
+  36   1          P3_7 = 0;
+  37   1          P3_6 = 0;
+  38   1          if (i > 7) i = i % 8;
+  39   1          P2 = _crol_(0x01, i);
+  40   1          P3_7 = 1;
+  41   1          P3_7 = 0;
+  42   1          P2 = ShowNum[j];
+  43   1          P3_6 = 1;
+  44   1          P3_6 = 0;
+  45   1      }
+  46          
+  47          void tempcount(unsigned int k) {
+  48   1          // 确保 k 在 0 - 99 范围内，拆分百、十、个位
+  49   1          temp[0] = k / 100;  // 百位
+  50   1          temp[1] = (k / 10) % 10; // 十位
+  51   1          temp[2] = k % 10;  // 个位
+  52   1      }
+  53          
+  54          void Delay(unsigned int i) {
+C51 COMPILER V9.57.0.0   UART                                                              01/08/2025 16:33:06 PAGE 2   
+
+  55   1          unsigned int j;
+  56   1          for (; i > 0; i--) {
+  57   2              for (j = 0; j < 125; j++) {}
+  58   2          }
+  59   1      }
+  60          
+  61          //void main(void) {
+  62          //    InitUART();
+  63          //    SendStr("Hello");
+  64          
+  65          //    ES = 1; //允许串行口中断
+  66          //    while (1) {
+  67          //        unsigned int a;
+  68          //        for (a = 0; a < 3; a++) {
+  69          //            weichoice(a, temp[a]);
+  70          //            Delay(2);
+  71          //        }
+  72          //    }
+  73          //}
+  74          
+  75          void SendByte(unsigned char dat) {
+  76   1          SBUF = dat;
+  77   1          while (TI == 0);
+  78   1          TI = 0;
+  79   1      }
+  80          
+  81          void SendStr(unsigned char *s) {
+  82   1          while (*s != '\0') { // 发送字符串
+  83   2              SendByte(*s);
+  84   2              s++;
+  85   2          }
+  86   1      }
+  87          
+  88          //void UART_SER(void) interrupt 4 {
+  89          //    unsigned char Temp;
+  90          //    unsigned char temp0;
+  91          
+  92          //    if (RI) {
+  93          //        RI = 0;
+  94          //        Temp = SBUF; // 接收到的数据
+  95          //        SBUF = Temp; // 串口回显
+  96          //        temp0 = Temp; // 临时存储接收到的字节
+  97          //        tempcount(temp0); // 更新 temp 数组
+  98          //    }
+  99          //    if (TI) {
+ 100          //        TI = 0;
+ 101          //    }
+ 102          //}
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    192    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

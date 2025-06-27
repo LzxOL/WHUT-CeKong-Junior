@@ -1,0 +1,162 @@
+C51 COMPILER V9.54   MAIN                                                                  01/11/2024 14:42:50 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          #include <stdio.h>
+   3          
+   4          #define uchar unsigned char                                     
+   5          #define uint unsigned int
+   6                  
+   7          uchar dis[10]=//共阳极数码管字符0-9
+   8          {0xc0,0xf9,0xa4,
+   9          0xb0,0x99,0x92,
+  10          0x82,0xf8,0x80,0x90};
+  11          
+  12          uchar light;//AD光敏检测亮度//可扩展自动开灯if条件
+  13          uchar temp = 0;//串口通信中间变量
+  14          uchar flag = 0;//收发信息指示
+  15          uchar people = 0;//是否有人指示//可扩展自动亮灯
+  16          
+  17          uint v_light;//亮度对应的电压
+  18          
+  19          uchar Get_AD_Result();//AD检测函数
+  20          
+  21          sbit LED = P0^0;        //板载LED控制口
+  22          sbit IR = P3^2; //红外传感器数据口
+  23          
+  24          //ADC0832接口
+  25          sbit CS = P3^5;
+  26          sbit CLK = P3^6;
+  27          sbit DIO = P3^7;
+  28          
+  29          void delay(uint i)//延时函数
+  30          {       
+  31   1              uchar t;
+  32   1              while (i--)     
+  33   1                      for(t=0;t<120;t++);     
+  34   1      }
+  35          
+  36          void main(void)
+  37           { 
+  38   1               TMOD = 0x20;//设置定时器T1为方式2
+  39   1               TH1 = 0xfd;//波特率9600
+  40   1               TL1 = 0xfd;
+  41   1               SCON = 0x50;//设置串口为方式1接收，REN=1
+  42   1               PCON = 0x00;//SMOD = 0
+  43   1               TR1 = 1;//启动T1
+  44   1               EA = 1;//总中断允许位
+  45   1               ES = 1;//打开接收中断
+  46   1               
+  47   1              while(1)
+  48   1              {
+  49   2                      //检测是否有人
+  50   2                      if(IR == 0)//检测到有人进入房间
+  51   2                              people = 1;//状态改变为有人
+  52   2                      
+  53   2                      while(people)//确认房间有人时
+  54   2                      {
+C51 COMPILER V9.54   MAIN                                                                  01/11/2024 14:42:50 PAGE 2   
+
+  55   3                              light=Get_AD_Result();
+  56   3                              v_light=(5000/256.0)*light;
+  57   3                              if(v_light > 4000)
+  58   3                                      LED = 0;//亮灯
+  59   3                              else 
+  60   3                                      LED = 1;//扩展关灯按键
+  61   3                                      
+  62   3                      }
+  63   2              }
+  64   1       }
+  65           
+  66          void int1() interrupt 4
+  67          {
+  68   1              if(RI)
+  69   1              {
+  70   2                      temp = SBUF;
+  71   2                      RI = 0; //清除接收中断标志位
+  72   2                      flag = 1;
+  73   2                      
+  74   2                      while(RI == 0)
+  75   2                      {
+  76   3                              P3=0xff;//解锁
+  77   3                              P2=0x01;//开启WX0
+  78   3                              P3=0x7f;//锁存
+  79   3                              P2=0xff;//清零
+  80   3                              P2 = dis[temp];
+  81   3                              if(flag==1)
+  82   3                              {
+  83   4                                      //发送接收到字符
+  84   4                                      SBUF=temp;
+  85   4                                      while(!TI);
+  86   4                                      TI=0;
+  87   4                                      flag=0;
+  88   4                              }
+  89   3                              if(temp == 1)
+  90   3                                      LED = 0;//LED亮
+  91   3                              
+  92   3                              delay(1000);
+  93   3                              P3=0xff;//解锁
+  94   3                              P2=0x00;//关闭位选
+  95   3                              P3=0x7f;//锁存
+  96   3                              delay(500);
+  97   3                              LED = 1;//LED灭        
+  98   3                              break;
+  99   3                      }                       
+ 100   2              }
+ 101   1      }
+ 102          
+ 103          uchar Get_AD_Result()
+ 104          {
+ 105   1          uchar i;
+ 106   1          uchar data1=0;
+ 107   1          CS=0;
+ 108   1        
+ 109   1          CLK=0;//第一个下降沿到来前，DI需置1，起始控制位，开始转换
+ 110   1              DIO=1;    
+ 111   1          CLK=1;
+ 112   1          
+ 113   1          CLK=0;//第二个下降沿到来前，设D=1/0，选择单端/差分（SGL/DIF）模式中的单端输
+             -入模式   
+ 114   1              DIO=1;
+ 115   1          CLK=1;           
+C51 COMPILER V9.54   MAIN                                                                  01/11/2024 14:42:50 PAGE 3   
+
+ 116   1      
+ 117   1          CLK=0;//第三个下降沿到来前，设D=0/1，选择CH0/CH1，这里选择单通道ch0     
+ 118   1              DIO=1;  
+ 119   1          CLK=1;
+ 120   1              DIO=0;   
+ 121   1         
+ 122   1          CLK=0;//第四个下降沿到来前,DI =1  
+ 123   1              DIO=1; 
+ 124   1          
+ 125   1          for(i=0;i<8;i++)//4-11，共8个下降沿 DO输出转换信号，读取数据（MSB-->LSB）
+ 126   1          {
+ 127   2              CLK=1;
+ 128   2              CLK=0;
+ 129   2             data1=(data1<<1)|(uchar)DIO;
+ 130   2          }
+ 131   1          CS=1;
+ 132   1          return data1;
+ 133   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    265    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     16    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

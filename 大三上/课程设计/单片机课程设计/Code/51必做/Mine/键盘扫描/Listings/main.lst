@@ -1,0 +1,274 @@
+C51 COMPILER V9.57.0.0   MAIN                                                              01/08/2025 19:18:48 PAGE 1   
+
+
+C51 COMPILER V9.57.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: E:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\Hardware) DEBUG OBJECTEXTEND PR
+                    -INT(.\Listings\main.lst) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "key.h"
+   3          #include "shumaguan.h"
+   4          #include "delay.h"
+   5          #include "lcd.h"
+   6          #include "adc.h"
+   7          #include "uart.h"
+   8          
+   9          #include <intrins.h>
+  10          
+  11          #define uchar unsigned char     
+  12          #define uint  unsigned int
+  13          unsigned int i,j;
+  14          unsigned char str1[]={"2025-1-13"};
+  15          unsigned char str2[]={"HelloWorld!imlzx"};
+  16           
+  17          
+  18          uchar dis[10]=//共阳极数码管字符0-9
+  19          {0xc0,0xf9,0xa4,
+  20          0xb0,0x99,0x92,
+  21          0x82,0xf8,0x80,0x90};
+  22          
+  23          
+  24          /* ADC 初始化参数*/
+  25          uchar code dis_adc[] = {
+  26              0xf9, 0xa4, 0xb0,  // 1,2,3
+  27              0x99, 0x92, 0x82,  // 4,5,6
+  28              0xf8, 0x80, 0x90   // 7,8,9
+  29          };
+  30          uchar AD1;
+  31          uint vt1;       
+  32          uint while_times = 0;
+  33          extern unsigned char date[8];
+  34          
+  35          /* 数码管动态显示 */
+  36          extern unsigned int h,m,s;
+  37          unsigned int h0=0,h1=0,m0=0,m1=0,s0=0,s1=0;  
+  38          unsigned int count_timer0=0;
+  39          /* 中断 */
+  40          sbit key_interrupt = P3^2;
+  41          sbit P3_7 = P3^7;
+  42          sbit P3_6 = P3^6;
+  43          
+  44          unsigned int button_cnt = 0;
+  45          unsigned char code ShowNum[] = {
+  46              0xC0, // 0
+  47              0xF9, // 1
+  48              0xA4, // 2
+  49              0xB0, // 3
+  50              0x99, // 4
+  51              0x92, // 5
+  52              0x82, // 6
+  53              0xF8, // 7
+  54              0x80, // 8
+C51 COMPILER V9.57.0.0   MAIN                                                              01/08/2025 19:18:48 PAGE 2   
+
+  55              0x90, // 9
+  56              0x88, // A
+  57              0x83, // B
+  58              0xC6, // C
+  59              0xA1, // D
+  60              0x86, // E
+  61              0x8E  // F
+  62          };
+  63          unsigned int a;
+  64          unsigned int temp_str[3];
+  65          
+  66          uint init_flag = 0;
+  67          // 主函数
+  68          void main(void) {
+  69   1          uchar key = 0;
+  70   1              uchar temp = 0;
+  71   1        
+  72   1              while(1) {
+  73   2                      if(!key){
+  74   3                              key = scan_keyboard();
+  75   3                      }
+  76   2                      switch(key) {// LCD
+  77   3              case 1:
+  78   3                              if(!init_flag){
+  79   4                                      init_flag = 1;
+  80   4                                      lcd_init();
+  81   4                              }
+  82   3                              lcd_init();// 初始化
+  83   3      
+  84   3                              xml(0x80);        // 从lcd的第一行左侧开始写入 1000 0000
+  85   3                              for(i=0;i<=8;i++)
+  86   3                              {
+  87   4                                      xdat(str1[i]);
+  88   4                                      delay_ms(5);
+  89   4                              }
+  90   3                              for(j=15;j>=0;j--)
+  91   3                              {
+  92   4                                      xml(0xc0+j);  // 从lcd的第二行左侧开始写入
+  93   4                                      for(i=0;i<=14;i++)
+  94   4                                      {
+  95   5                                              xdat(str2[i]);
+  96   5                                              delay_ms(5);
+  97   5                                      }
+  98   4                                      delay_ms(500);
+  99   4                              }
+ 100   3                              break;
+ 101   3              case 2: // adc
+ 102   3                  // 按键2的功能
+ 103   3                              if (!init_flag) {
+ 104   4                                      init_flag = 1;
+ 105   4                                      lcd_init();  // 初始化 LCD
+ 106   4                              }
+ 107   3      
+ 108   3                              // 显示第一行字符
+ 109   3                              xml(0x80);  // 设置光标到 LCD 第一行左侧
+ 110   3                              for (i = 0; i <= 8; i++) {
+ 111   4                                      xdat(str1[i]);  // 写入字符
+ 112   4                                      delay_ms(5);
+ 113   4                              }
+ 114   3      
+ 115   3                              // 获取 AD1 转换结果
+ 116   3                              AD1 = Get_AD_Result();  // 获取 AD1 的采样值
+C51 COMPILER V9.57.0.0   MAIN                                                              01/08/2025 19:18:48 PAGE 3   
+
+ 117   3                              vt1 = (5000 / 256.0) * AD1;  // 转换为电压值（单位 mV）
+ 118   3      
+ 119   3                              // 将转换后的电压值拆分为字符
+ 120   3                              date[0] = (vt1 / 1000) + '0';      // 千位转换为字符
+ 121   3                              date[1] = (vt1 / 100 % 10) + '0';  // 百位转换为字符
+ 122   3                              date[2] = (vt1 % 100 / 10) + '0';  // 十位转换为字符
+ 123   3                              date[3] = (vt1 % 10) + '0';        // 个位转换为字符
+ 124   3      
+ 125   3                              // 显示 AD1 转换后的电压值在第二行
+ 126   3                              xml(0xC0);  // 设置光标到 LCD 第二行左侧
+ 127   3                              xdat('A');  // 显示 "A"
+ 128   3                              xdat('D');  // 显示 "D"
+ 129   3                              xdat('1');  // 显示 "1"
+ 130   3                              xdat(':');  // 显示 ":"
+ 131   3      
+ 132   3                              for (i = 0; i < 4; i++) {
+ 133   4                                      xdat(date[i]);  // 显示转换后的电压值
+ 134   4                                      delay_ms(5);
+ 135   4                              }
+ 136   3      
+ 137   3                              xdat('m');  // 显示 "m"
+ 138   3                              xdat('V');  // 显示 "V"
+ 139   3      
+ 140   3                              delay_ms(500);  // 延时
+ 141   3      
+ 142   3                              break;
+ 143   3                  
+ 144   3              case 3:
+ 145   3                  // 按键3的功能 数码管shownum 
+ 146   3                              if(!init_flag){
+ 147   4                                      init_flag = 1;
+ 148   4                                      TMOD =0x01;
+ 149   4                                      TH0 = 0x3C;  // 初值高8位就是65536-计时值50000（50毫秒） = 15536转换成16进制为 3cb0
+ 150   4                                      TL0 = 0xB0;  // 高8位为3c， 低8位为b0
+ 151   4                                      ET0 =1;      // 开启定时器0
+ 152   4                                      EA = 1;      // 开启总中断
+ 153   4                                      TR0 = 1;     // 开启定时器
+ 154   4                                      
+ 155   4                              }
+ 156   3                              Display();
+ 157   3                  break;
+ 158   3              case 4: // 中断
+ 159   3                              if(!init_flag){
+ 160   4                                      init_flag = 1;
+ 161   4                                      P2 = 0x01;  // 初始化P2口
+ 162   4              
+ 163   4                                      EA = 1; 
+ 164   4                                      IT0 = 1;  
+ 165   4                                      EX0 = 1;   
+ 166   4                              }
+ 167   3                              for(j = 0; j < 8; j++)
+ 168   3                              {
+ 169   4                                      P2 = 0x01;  // 重新初始化P2，开始选通第一个数码管
+ 170   4                                      P2 = _crol_(P2, j);  // 循环左移，选通相应的数码管
+ 171   4                                      P3_7 = 1;  // 产生锁存信号，高电平
+ 172   4                                      P3_7 = 0;  // 锁存信号恢复为低电平
+ 173   4      
+ 174   4                                      P2 = ShowNum[button_cnt];  // 显示编码，输出到P2口
+ 175   4                                      P3_6 = 1;  // 产生显示信号，高电平
+ 176   4                                      P3_6 = 0;  // 显示信号恢复为低电平
+ 177   4                                      delay_ms(1);  // 短延时实现视觉暂留效果
+ 178   4                              }
+C51 COMPILER V9.57.0.0   MAIN                                                              01/08/2025 19:18:48 PAGE 4   
+
+ 179   3                                      
+ 180   3                              break;
+ 181   3                      case 5:
+ 182   3                              if(!init_flag){
+ 183   4                                      init_flag = 1;
+ 184   4                                      InitUART();
+ 185   4                                      SendStr("Hello");
+ 186   4      
+ 187   4                                      ES = 1; //允许串行口中断
+ 188   4                              }
+ 189   3                              for (a = 0; a < 3; a++) {
+ 190   4                                      weichoice(a, temp_str[a]);
+ 191   4                                      Delay(2);
+ 192   4                              }
+ 193   3                              break;
+ 194   3              default:
+ 195   3      
+ 196   3                              break;
+ 197   3          }
+ 198   2      
+ 199   2          }
+ 200   1      }
+ 201          
+ 202          
+ 203          void int0() interrupt 0 {
+ 204   1          if (!key_interrupt) {
+ 205   2              button_cnt += 1;
+ 206   2              button_cnt = button_cnt & 0x0F;  // 保证计数在0-15之间循环
+ 207   2              delay_ms(100);
+ 208   2          }
+ 209   1      }
+ 210          
+ 211          //  时间中断函数
+ 212          void timer0() interrupt 1{
+ 213   1              unsigned int i=0;
+ 214   1              TH0 = 0x3C;     // 初值高8位就是65536-计时值50000（50毫秒） = 15536转换成16进制为 3cb0
+ 215   1              TL0 = 0xB0;     // 高8位为3c， 低8位为b0
+ 216   1              count_timer0++;         //  这个中断函数每隔50毫秒运行一次，每次count加1
+ 217   1              if(count_timer0==20){  //  如果count等于了20，就是运行了20次X50=1000毫秒=1秒   
+ 218   2                      s+=1;   // 秒钟加1
+ 219   2                      count_timer0 = 0;       // count置0重新计算
+ 220   2              }
+ 221   1              if(s==60){   //  秒钟=60
+ 222   2                      m+=1;           //分钟加1
+ 223   2                      s=0;            // 秒钟置0从新计算
+ 224   2              }
+ 225   1              if(m==60){    // 如果分钟等于60了
+ 226   2                      h+=1;           // 小时加1
+ 227   2                      m=0;            // 分钟置0从新计算
+ 228   2              }
+ 229   1              if(h==24){      //  如果小时等于24了或是12了
+ 230   2                      h=0;            //  小时置0从新计算      （后面还可以加天，月， 年）
+ 231   2              }
+ 232   1      }
+ 233          
+ 234          
+ 235          void UART_ISR() interrupt 4//串口中断函数
+ 236          {
+ 237   1              if(RI==1)//接收中断
+ 238   1              {
+ 239   2                      SendByte(SBUF);//把接收的数据发送到计算机
+ 240   2                      RI=0;//软件清零
+C51 COMPILER V9.57.0.0   MAIN                                                              01/08/2025 19:18:48 PAGE 5   
+
+ 241   2              }
+ 242   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    889    ----
+   CONSTANT SIZE    =     31    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     72       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
